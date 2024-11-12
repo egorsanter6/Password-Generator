@@ -1,0 +1,59 @@
+<div>
+  <label for="length">Length</label>
+  <input type="number" id="length" min="5" max="100" value="20">
+</div>
+<div id="lengthRange">
+  <label for="randomLength">Random length</label>
+  <input type="checkbox" id="randomLength">
+</div>
+<div>
+  <label for="numberOfPasswords">Number of passwords</label>
+  <input value="1" type="number" id="numberOfPasswords" min="1" max="20">
+</div>
+<div>
+  <label for="upperCase">UPPER CASE</label>
+  <input checked type="checkbox" id="upperCase">
+</div>
+<div>
+  <label for="lowerCase">lower case</label>
+  <input checked type="checkbox" id="lowerCase">
+</div>
+<div>
+  <label for="digits">Digits</label>
+  <input checked type="checkbox" id="digits">
+</div>
+<div>
+  <label for="symbols">Symbols</label>
+  <input checked type="checkbox" id="symbols">
+</div>
+<div>
+  <label for="space">Space</label>
+  <input type="checkbox" id="space">
+</div>
+<div>
+  <label for="exceptSymbols">Except symbols</label>
+  <input type="text" id="exceptSymbols">
+</div>
+<div>
+  <label for="requiredSymbols">Required symbols</label>
+  <input type="text" id="requiredSymbols">
+</div>
+<div>
+  <label for="overriddenSymbols">Override standard symbols</label>
+  <input type="text" id="overriddenSymbols">
+</div>
+<div>
+  <label for="addSymbols">Add symbols to standard symbols</label>
+  <input type="text" id="addSymbols">
+</div>
+<div>
+  <label for="requiredWord">Required word</label>
+  <input type="text" id="requiredWord">
+</div>
+<button id="generatorBtn" type="submit">Generate a password</button>
+<div>
+  <label for="hidePasswords">Hide passwords</label>
+  <input type="checkbox" id="hidePasswords">
+</div>
+<div id="passwordContainer"></div>
+<script src="generator.js" defer></script>
