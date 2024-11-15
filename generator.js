@@ -21,10 +21,6 @@ let generatedPasswords = []
 let passwordsHidden = false
 let generatedLength = ''
 
-// if (length.value == '') {
-//   length.value = Math.floor(Math.random() * (30 - 15) + 15)
-// }
-
 const myUpper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 const myLower = 'abcdefghijklmnopqrstuvwxyz'
 const myDigits = '0123456789'
@@ -49,6 +45,10 @@ function updatePasswordSymbols() {
     const exclude = new RegExp(`[${sanitizedInput}]`, 'g');
     passwordSymbols = passwordSymbols.replace(exclude, '');
   }
+
+  if (overriddenSymbols.value) {
+    passwordSymbols = overriddenSymbols.value
+  }
 }
 
 upperCase.addEventListener('change', updatePasswordSymbols)
@@ -59,30 +59,59 @@ space.addEventListener('change', updatePasswordSymbols)
 addSymbols.addEventListener('change', updatePasswordSymbols)
 exceptSymbols.addEventListener('change', updatePasswordSymbols)
 requiredSymbols.addEventListener('change', updatePasswordSymbols)
+requiredWord.addEventListener('input', function () {
+  updatePasswordSymbols()
+  
+  let isValid = false
+  if (requiredWord.value) {
+    exceptSymbols.disabled = true
+    
+    for (let i = 0; i < requiredWord.value.length; i++) {
+      if (!passwordSymbols.includes(requiredWord.value[i])) {
+        isValid = true
+        break;
+      }
+    }
+    if (parseInt(requiredWord.value.length) > pwdLength()) {
+      isValid = true
+    } else {
+      isValid = false
+    }
+    
+    generatorBtn.disabled = isValid
+  } else {
+    generatorBtn.disabled = isValid
+    exceptSymbols.disabled = false
+  }
+})
 
 overriddenSymbols.addEventListener('input', function() {
   if (overriddenSymbols.value) {
-      upperCase.disabled = true
-      lowerCase.disabled = true
-      digits.disabled = true
-      symbols.disabled = true
-      exceptSymbols.disabled = true
-      requiredSymbols.disabled = true
-      addSymbols.disabled = true
+    upperCase.disabled = true
+    lowerCase.disabled = true
+    digits.disabled = true
+    symbols.disabled = true
+    space.disabled = true
+    exceptSymbols.disabled = true
+    requiredSymbols.disabled = true
+    addSymbols.disabled = true
+    requiredWord.disabled = true
 
-      passwordSymbols = overriddenSymbols.value
+    updatePasswordSymbols()
 
   } else {
-      upperCase.disabled = false
-      lowerCase.disabled = false
-      digits.disabled = false
-      symbols.disabled = false
-      exceptSymbols.disabled = false
-      requiredSymbols.disabled = false
-      addSymbols.disabled = false
+    upperCase.disabled = false
+    lowerCase.disabled = false
+    digits.disabled = false
+    symbols.disabled = false
+    space.disabled = false
+    exceptSymbols.disabled = false
+    requiredSymbols.disabled = false
+    addSymbols.disabled = false
+    requiredWord.disabled = false
 
-      updatePasswordSymbols()
-    } 
+    updatePasswordSymbols()
+  } 
 })
 
 exceptSymbols.addEventListener('input', function() {
@@ -93,10 +122,14 @@ exceptSymbols.addEventListener('input', function() {
   }
 })
 requiredSymbols.addEventListener('input', function() {
+  updatePasswordSymbols()
   const requiredSymbolsArray = requiredSymbols.value ? requiredSymbols.value.split('') : []
   generatorBtn.disabled = !requiredSymbolsArray.every(char => passwordSymbols.includes(char))
   if (requiredSymbols.value) {
     exceptSymbols.disabled = true
+    if (parseInt(requiredSymbols.value.length) > pwdLength()) {
+      generatorBtn.disabled = true
+    }
   } else {
     exceptSymbols.disabled = false
   }
@@ -122,8 +155,20 @@ randomLength.addEventListener('change', function() {
     secondValue.max = '100'
     secondValue.value= '30'
 
+    
+    
     lengthRange.appendChild(firstValue)
     lengthRange.appendChild(secondValue)
+    firstValue.addEventListener('input', function () {
+      if (firstValue.value < 5) firstValue.value = 5
+      if (firstValue.value > 100) firstValue.value = 100
+      if (firstValue.value > secondValue.value) firstValue = 5
+    })
+    secondValue.addEventListener('input', function () {
+      if (secondValue.value < 5) secondValue.value = 5
+      if (secondValue.value > 100) secondValue.value = 100
+      // if (secondValue.value > secondValue.value) firstValue = 5
+    })
   } else {
     length.disabled = false
     if (lengthRange.getElementsByTagName('input')) {
@@ -132,6 +177,15 @@ randomLength.addEventListener('change', function() {
       inputElements[1].remove()
     }
   }
+})
+
+length.addEventListener('input', function () {
+  if (length.value < 5) length.value = 5
+  if (length.value > 100) length.value = 100
+})
+numberOfPasswords.addEventListener('input', function () {
+  if (numberOfPasswords.value < 1) numberOfPasswords.value = 1
+  if (numberOfPasswords.value > 20) numberOfPasswords.value = 20
 })
 
 let listElement
@@ -163,7 +217,10 @@ function passwordGenerator(pwdNum) {
   for (let x = 0; x < pwdNum.value; x++) {
     let generatedPassword
     let myLength = pwdLength()
-
+    let xz = ''
+    if (requiredWord.value) {
+      myLength -= parseInt(requiredWord.value.length)
+    }
     do {
       generatedPassword = ''
       
@@ -171,13 +228,17 @@ function passwordGenerator(pwdNum) {
         const randomIndex = Math.floor(Math.random() * passwordSymbols.length)
         generatedPassword += passwordSymbols[randomIndex];
       }
+      if (requiredWord.value) {
+        xz = Math.floor(Math.random() * generatedPassword.length)
+        generatedPassword = generatedPassword.slice(0, xz) + requiredWord.value + generatedPassword.slice(xz)
+      }
       
     } while (!requiredSymbolsArray.every(char => generatedPassword.includes(char)))
     
     generatedPasswords.push(generatedPassword)
     const newParagraph = document.createElement('p')
     const passwordItem = document.createElement('li')
-    if (hidePasswords.checked) passwordItem.textContent = '*'.repeat(generatedPassword.length)
+    if (hidePasswords.checked) passwordItem.textContent = '******'
     else passwordItem.textContent = generatedPasswords[x]
 
     newParagraph.appendChild(passwordItem)
@@ -190,6 +251,6 @@ function togglePasswordsVisibility() {
   passwordsHidden = !passwordsHidden
 
   for (let i = 0; i < listItems.length; i++) {
-    listItems[i].textContent = passwordsHidden ? '*'.repeat(generatedPasswords[i].length) : generatedPasswords[i]
+    listItems[i].textContent = passwordsHidden ? '******' : generatedPasswords[i]
   }
 }
