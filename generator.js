@@ -15,6 +15,7 @@ const requiredWord = document.getElementById('requiredWord')
 const hidePasswords = document.getElementById('hidePasswords')
 const randomLength = document.getElementById('randomLength')
 const lengthRange = document.getElementById('lengthRange')
+const myBtn = document.getElementById('myBtn')
 
 let passwordSymbols = ''
 let generatedPasswords = []
@@ -49,6 +50,7 @@ function updatePasswordSymbols() {
   if (overriddenSymbols.value) {
     passwordSymbols = overriddenSymbols.value
   }
+  checkFormValidity()
 }
 
 upperCase.addEventListener('change', updatePasswordSymbols)
@@ -61,7 +63,7 @@ exceptSymbols.addEventListener('change', updatePasswordSymbols)
 requiredSymbols.addEventListener('change', updatePasswordSymbols)
 requiredWord.addEventListener('input', function () {
   updatePasswordSymbols()
-  
+
   let isValid = false
   if (requiredWord.value) {
     exceptSymbols.disabled = true
@@ -155,8 +157,6 @@ randomLength.addEventListener('change', function() {
     secondValue.max = '100'
     secondValue.value= '30'
 
-    
-    
     lengthRange.appendChild(firstValue)
     lengthRange.appendChild(secondValue)
     firstValue.addEventListener('input', function () {
@@ -167,7 +167,6 @@ randomLength.addEventListener('change', function() {
     secondValue.addEventListener('input', function () {
       if (secondValue.value < 5) secondValue.value = 5
       if (secondValue.value > 100) secondValue.value = 100
-      // if (secondValue.value > secondValue.value) firstValue = 5
     })
   } else {
     length.disabled = false
@@ -177,6 +176,10 @@ randomLength.addEventListener('change', function() {
       inputElements[1].remove()
     }
   }
+})
+
+addSymbols.addEventListener('input', function() {
+  checkFormValidity()
 })
 
 length.addEventListener('input', function () {
@@ -223,7 +226,7 @@ function passwordGenerator(pwdNum) {
     }
     do {
       generatedPassword = ''
-      
+
       for (let i = 0; i < myLength; i++) {
         const randomIndex = Math.floor(Math.random() * passwordSymbols.length)
         generatedPassword += passwordSymbols[randomIndex];
@@ -232,25 +235,70 @@ function passwordGenerator(pwdNum) {
         xz = Math.floor(Math.random() * generatedPassword.length)
         generatedPassword = generatedPassword.slice(0, xz) + requiredWord.value + generatedPassword.slice(xz)
       }
-      
-    } while (!requiredSymbolsArray.every(char => generatedPassword.includes(char)))
-    
-    generatedPasswords.push(generatedPassword)
-    const newParagraph = document.createElement('p')
-    const passwordItem = document.createElement('li')
-    if (hidePasswords.checked) passwordItem.textContent = '******'
-    else passwordItem.textContent = generatedPasswords[x]
 
-    newParagraph.appendChild(passwordItem)
-    listElement.appendChild(newParagraph)
+    } while (!requiredSymbolsArray.every(char => generatedPassword.includes(char)))
+
+    generatedPasswords.push(generatedPassword);
+
+    // Создаем элементы
+    const passwordItem = document.createElement('li')
+    const paragraph = document.createElement('p')
+    const toggleCheckbox = document.createElement('input')
+    toggleCheckbox.type = 'checkbox'
+    toggleCheckbox.checked = hidePasswords.checked
+
+    const passwordText = document.createElement('span')
+    passwordText.textContent = hidePasswords.checked ? '******' : generatedPassword
+
+    // Обработчик для чекбокса
+    toggleCheckbox.addEventListener('change', function () {
+      passwordText.textContent = toggleCheckbox.checked ? '******' : generatedPassword
+    })
+
+    // Добавляем чекбокс и текст внутрь <p>, а <p> внутрь <li>
+    paragraph.appendChild(toggleCheckbox)
+    paragraph.appendChild(passwordText)
+    passwordItem.appendChild(paragraph)
+    listElement.appendChild(passwordItem)
   }
 }
 
 function togglePasswordsVisibility() {
-  const listItems = passwordContainer.getElementsByTagName('li')
-  passwordsHidden = !passwordsHidden
+  const listItems = passwordContainer.getElementsByTagName('li');
+  passwordsHidden = !passwordsHidden;
 
   for (let i = 0; i < listItems.length; i++) {
-    listItems[i].textContent = passwordsHidden ? '******' : generatedPasswords[i]
+    const passwordText = listItems[i].getElementsByTagName('span')[0];
+    const checkbox = listItems[i].getElementsByTagName('input')[0];
+
+    // Обновляем текст пароля и синхронизируем с главным переключателем
+    checkbox.checked = passwordsHidden;
+    passwordText.textContent = passwordsHidden ? '******' : generatedPasswords[i];
   }
 }
+
+function checkFormValidity() {
+  const isValid =
+  upperCase.checked ||
+  lowerCase.checked ||
+  digits.checked ||
+  symbols.checked ||
+  space.checked ||
+  addSymbols.value ||
+  overriddenSymbols.value
+  
+  generatorBtn.disabled = !isValid
+
+  let existingMessage = myBtn.querySelector('span')
+  if (!isValid) {
+    if (!existingMessage) {
+      const myEl = document.createElement('span')
+      myEl.textContent = "*Add something to your future password or override your own symbols"
+      myBtn.append(myEl)
+    }
+  } else {
+    if (existingMessage) {
+      existingMessage.remove()
+    }
+  }
+} 
