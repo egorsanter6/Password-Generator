@@ -1,228 +1,284 @@
-const length = document.getElementById('length')
-const numberOfPasswords = document.getElementById('numberOfPasswords')
-const overriddenSymbols = document.getElementById('overriddenSymbols')
-const addSymbols = document.getElementById('addSymbols')
-const exceptSymbols = document.getElementById('exceptSymbols')
-const requiredSymbols = document.getElementById('requiredSymbols')
-const upperCase = document.getElementById('upperCase')
-const lowerCase = document.getElementById('lowerCase')
-const digits = document.getElementById('digits')
-const symbols = document.getElementById('symbols')
-const space = document.getElementById('space')
-const generatorBtn = document.getElementById('generatorBtn')
-const passwordContainer = document.getElementById('passwordContainer')
-const requiredWord = document.getElementById('requiredWord')
-const hidePasswords = document.getElementById('hidePasswords')
-const randomLength = document.getElementById('randomLength')
-const lengthRange = document.getElementById('lengthRange')
-const myBtn = document.getElementById('myBtn')
+let elementsList = ['length', 'numberOfPasswords', 'overriddenSymbols',
+                    'addSymbols', 'exceptSymbols', 'requiredSymbols',
+                    'upperCase', 'lowerCase', 'digits',
+                    'symbols', 'space', 'generatorBtn',
+                    'passwordContainer', 'requiredWord', 'hidePasswords',
+                    'randomLength', 'lengthRange', 'myBtn',
+                  ]
+
+let elements = {}
+
+for (let i = 0; i < elementsList.length; i++) {
+  currentElements = elementsList[i]
+  elements[currentElements] = document.getElementById(currentElements)
+}
 
 let passwordSymbols = ''
 let generatedPasswords = []
 let passwordsHidden = false
 let generatedLength = ''
 
-const myUpper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-const myLower = 'abcdefghijklmnopqrstuvwxyz'
-const myDigits = '0123456789'
-const mySymbols = '!"#$%&()*+,-./:;<=>?@[\]^_`{|}~' + "'"
-const mySpace = ' '
+const upperCaseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+const lowerCaseLetters = 'abcdefghijklmnopqrstuvwxyz'
+const digits = '0123456789'
+const symbols = '!"#$%&()*+,-./:;<=>?@[\]^_`{|}~' + "'"
+const space = ' '
 
 function updatePasswordSymbols() {
   passwordSymbols = ''
 
-  if (upperCase.checked) passwordSymbols += myUpper
-  if (lowerCase.checked) passwordSymbols += myLower
-  if (digits.checked) passwordSymbols += myDigits
-  if (symbols.checked) passwordSymbols += mySymbols
-  if (space.checked) passwordSymbols += mySpace
+  if (elements['upperCase'].checked) passwordSymbols += upperCaseLetters
+  if (elements['lowerCase'].checked) passwordSymbols += lowerCaseLetters
+  if (elements['digits'].checked) passwordSymbols += digits
+  if (elements['symbols'].checked) passwordSymbols += symbols
+  if (elements['space'].checked) passwordSymbols += space
+  if (elements['addSymbols'].value) passwordSymbols += elements['addSymbols'].value
 
-  if (addSymbols.value) {
-    passwordSymbols += addSymbols.value
-  }
-
-  if (exceptSymbols.value) {
-    const sanitizedInput = exceptSymbols.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (elements['exceptSymbols'].value) {
+    const sanitizedInput = elements['exceptSymbols'].value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const exclude = new RegExp(`[${sanitizedInput}]`, 'g');
     passwordSymbols = passwordSymbols.replace(exclude, '');
   }
 
-  if (overriddenSymbols.value) {
-    passwordSymbols = overriddenSymbols.value
+  if (elements['overriddenSymbols'].value) {
+    passwordSymbols = elements['overriddenSymbols'].value
   }
+
   checkFormValidity()
 }
 
-upperCase.addEventListener('change', updatePasswordSymbols)
-lowerCase.addEventListener('change', updatePasswordSymbols)
-digits.addEventListener('change', updatePasswordSymbols)
-symbols.addEventListener('change', updatePasswordSymbols)
-space.addEventListener('change', updatePasswordSymbols)
-addSymbols.addEventListener('change', updatePasswordSymbols)
-exceptSymbols.addEventListener('change', updatePasswordSymbols)
-requiredSymbols.addEventListener('change', updatePasswordSymbols)
-requiredWord.addEventListener('input', function () {
-  updatePasswordSymbols()
+function checkFormValidity() {
+  let isValid = passwordSymbols !== ''; // Проверяем, есть ли допустимые символы
+  elements['generatorBtn'].disabled = !isValid;
 
+  const existingParagraph = document.getElementById('1');
+  if (!isValid) {
+    // Вывод ошибки, если символы пустые
+    elements['requiredSymbols'].disabled = true;
+    elements['requiredWord'].disabled = true;
+    elements['exceptSymbols'].disabled = true;
+
+    if (!existingParagraph) {
+      getError('1', "*Add something to your future password or override your own symbols");
+    }
+  } else {
+    // Убираем ошибку и активируем/деактивируем поля в зависимости от их значений
+    if (existingParagraph) {
+      existingParagraph.remove();
+    }
+
+    elements['requiredSymbols'].disabled = !!elements['exceptSymbols'].value;
+    elements['exceptSymbols'].disabled = !!elements['requiredSymbols'].value;
+    elements['requiredWord'].disabled = false;
+  }
+}
+
+function getError(argId, errorText) {
+  const existingElement = document.getElementById(argId)
+  if (!existingElement) {
+    const paragraph = document.createElement('p')
+    paragraph.id = argId
+    const error = document.createElement('span')
+    error.textContent = errorText
+    paragraph.appendChild(error)
+    elements['myBtn'].append(paragraph)
+  }
+}
+
+const fieldsToListen = ['upperCase', 'lowerCase', 'digits',
+                        'symbols', 'space', 'addSymbols',
+                        'exceptSymbols','requiredSymbols', 'requiredWord',
+                        'overriddenSymbols',
+                      ]
+
+fieldsToListen.forEach(fieldId => {
+  elements[fieldId].addEventListener('change', updatePasswordSymbols)
+})
+
+elements['overriddenSymbols'].addEventListener('input', function() {
+  if (elements['overriddenSymbols'].value) toggleFieldsDisabled(true)
+  else toggleFieldsDisabled(false)
+})
+
+elements['exceptSymbols'].addEventListener('input', function() {
+  checkFormValidity()
+})
+
+elements['length'].addEventListener('input', function () {
+  lengthChecker('length', 5, 100)
+})
+elements['numberOfPasswords'].addEventListener('input', function () {
+  lengthChecker('length', 1, 20)
+})
+
+function lengthChecker(fieldName, firstArg, lastArg) {
+  if (elements[fieldName].value < firstArg) elements[fieldName].value = firstArg
+  if (elements[fieldName].value > lastArg) elements[fieldName].value = lastArg
+}
+
+elements['requiredSymbols'].addEventListener('input', function() {
+  checkFormValidity()
+  const requiredSymbolsArray = elements['requiredSymbols'].value ? elements['requiredSymbols'].value.split('') : []
+  hasInvalidSymbols = requiredSymbolsArray.every(char => passwordSymbols.includes(char))
+  let isLengthExceeded
+  if (elements['randomLength'].checked) {
+    isLengthExceeded = parseInt(elements['lengthRange'].getElementsByTagName('input')[1].value)
+  } else {
+    isLengthExceeded = parseInt(elements['requiredSymbols'].value.length) > pwdLength()
+  }
+
+  let isValid = true
+
+  const existingParagraph = document.getElementById('2')
+  if (isLengthExceeded) {
+    getError('2', "*You can't have required symbols longer than password's length")
+    isValid = false 
+  } else {
+    if (existingParagraph) existingParagraph.remove()
+    }
+
+  const existingParagraph2 = document.getElementById('4')
+  if (!hasInvalidSymbols) {
+    getError('4', "*Some required symbols are not in the allowed symbols set")
+    isValid = false 
+  } else {
+    if (existingParagraph2) existingParagraph2.remove()
+    }
+  
+  elements['generatorBtn'].disabled = !isValid
+  elements['exceptSymbols'].disabled = elements['requiredSymbols'].value ? true : false
+})
+
+elements['requiredWord'].addEventListener('input', function () {
   let isValid = false
-  if (requiredWord.value) {
-    exceptSymbols.disabled = true
+  if (elements['requiredWord'].value) {
+    elements['exceptSymbols'].disabled = true
     
-    for (let i = 0; i < requiredWord.value.length; i++) {
-      if (!passwordSymbols.includes(requiredWord.value[i])) {
+    let requiredWordLen = elements['requiredWord'].value.length
+    
+    for (let i = 0; i < requiredWordLen; i++) {
+      if (!passwordSymbols.includes(elements['requiredWord'].value[i])) {
         isValid = true
         break;
       }
     }
-    if (parseInt(requiredWord.value.length) > pwdLength()) {
+
+    const existingParagraph = document.getElementById('3')
+    if (parseInt(requiredWordLen) > pwdLength()) {
+      if (!existingParagraph) {
+        getError('3', "*You can't have required word longer than password's length")
+      }
       isValid = true
     } else {
       isValid = false
+      if (existingParagraph) existingParagraph.remove()
     }
     
-    generatorBtn.disabled = isValid
+    elements['generatorBtn'].disabled = isValid
   } else {
-    generatorBtn.disabled = isValid
-    exceptSymbols.disabled = false
+    elements['generatorBtn'].disabled = isValid
+    elements['exceptSymbols'].disabled = false
   }
 })
 
-overriddenSymbols.addEventListener('input', function() {
-  if (overriddenSymbols.value) {
-    upperCase.disabled = true
-    lowerCase.disabled = true
-    digits.disabled = true
-    symbols.disabled = true
-    space.disabled = true
-    exceptSymbols.disabled = true
-    requiredSymbols.disabled = true
-    addSymbols.disabled = true
-    requiredWord.disabled = true
+elements['randomLength'].addEventListener('change', function() {
+  if (elements['randomLength'].checked) {
+    elements['length'].disabled = true
 
-    updatePasswordSymbols()
+    const firstValue = createValue('firstValue')
+    const secondValue = createValue('secondValue')
 
-  } else {
-    upperCase.disabled = false
-    lowerCase.disabled = false
-    digits.disabled = false
-    symbols.disabled = false
-    space.disabled = false
-    exceptSymbols.disabled = false
-    requiredSymbols.disabled = false
-    addSymbols.disabled = false
-    requiredWord.disabled = false
+    elements['lengthRange'].appendChild(firstValue)
+    elements['lengthRange'].appendChild(secondValue)
 
-    updatePasswordSymbols()
-  } 
-})
-
-exceptSymbols.addEventListener('input', function() {
-  if (exceptSymbols.value) {
-    requiredSymbols.disabled = true
-  } else {
-    requiredSymbols.disabled = false
-  }
-})
-requiredSymbols.addEventListener('input', function() {
-  updatePasswordSymbols()
-  const requiredSymbolsArray = requiredSymbols.value ? requiredSymbols.value.split('') : []
-  generatorBtn.disabled = !requiredSymbolsArray.every(char => passwordSymbols.includes(char))
-  if (requiredSymbols.value) {
-    exceptSymbols.disabled = true
-    if (parseInt(requiredSymbols.value.length) > pwdLength()) {
-      generatorBtn.disabled = true
-    }
-  } else {
-    exceptSymbols.disabled = false
-  }
-})
-
-hidePasswords.addEventListener('change', togglePasswordsVisibility)
-
-randomLength.addEventListener('change', function() {
-  if (randomLength.checked) {
-    length.disabled = true
-
-    const firstValue = document.createElement('input')
-
-    firstValue.type = 'number'
-    firstValue.min = '5'
-    firstValue.max = '100'
-    firstValue.value= '15'
-
-    const secondValue = document.createElement('input')
-
-    secondValue.type = 'number'
-    secondValue.min = '5'
-    secondValue.max = '100'
-    secondValue.value= '30'
-
-    lengthRange.appendChild(firstValue)
-    lengthRange.appendChild(secondValue)
     firstValue.addEventListener('input', function () {
-      if (firstValue.value < 5) firstValue.value = 5
-      if (firstValue.value > 100) firstValue.value = 100
-      if (firstValue.value > secondValue.value) firstValue = 5
-    })
+      let first = Number(firstValue.value)
+      let second = Number(secondValue.value)
+
+      if (first > second) first = second
+      if (first < 5) first = 5
+      if (first > 100) first = 100
+
+      firstValue.value = first
+    });
+
     secondValue.addEventListener('input', function () {
-      if (secondValue.value < 5) secondValue.value = 5
-      if (secondValue.value > 100) secondValue.value = 100
+      let first = Number(firstValue.value)
+      let second = Number(secondValue.value)
+
+      if (second < first) second = first
+      if (second < 5) second = 5
+      if (second > 100) second = 100
+
+      secondValue.value = second
     })
   } else {
-    length.disabled = false
-    if (lengthRange.getElementsByTagName('input')) {
-      inputElements = lengthRange.getElementsByTagName('input')
-      inputElements[1].remove()
-      inputElements[1].remove()
-    }
+    elements['length'].disabled = false
+
+    const inputElements = elements['lengthRange'].getElementsByTagName('input')
+    
+    inputElements[1].remove()
+    inputElements[1].remove()
   }
 })
 
-addSymbols.addEventListener('input', function() {
-  checkFormValidity()
-})
+elements['hidePasswords'].addEventListener('change', togglePasswordsVisibility)
 
-length.addEventListener('input', function () {
-  if (length.value < 5) length.value = 5
-  if (length.value > 100) length.value = 100
-})
-numberOfPasswords.addEventListener('input', function () {
-  if (numberOfPasswords.value < 1) numberOfPasswords.value = 1
-  if (numberOfPasswords.value > 20) numberOfPasswords.value = 20
-})
+function toggleFieldsDisabled(arg) {
+  fieldsList = ['upperCase', 'lowerCase', 'digits',
+                'symbols', 'space', 'exceptSymbols',
+                'requiredSymbols', 'addSymbols', 'requiredWord'
+  ]
+  fieldsList.forEach(fieldId => {
+    const element = document.getElementById(fieldId)
+    element.disabled = arg
+  });
+}
+
+function createValue(id) {
+  value = document.createElement('input')
+
+  value.type = 'number'
+  value.min = '5'
+  value.max = '100'
+  if (id=='firstValue') value.value = '15'
+  else if (id=='secondValue') value.value = '30'
+  value.id = id
+  return value
+}
 
 let listElement
-generatorBtn.onclick = function () {
+elements['generatorBtn'].onclick = function () {
   updatePasswordSymbols()
-  passwordContainer.innerHTML = ''
+  elements['passwordContainer'].innerHTML = ''
   generatedPasswords = []
-  listElement = document.createElement(numberOfPasswords.value == 1 ? 'ul' : 'ol')
+  listElement = document.createElement(elements['numberOfPasswords'].value == 1 ? 'ul' : 'ol')
   
-  passwordGenerator(numberOfPasswords)
-  passwordContainer.appendChild(listElement)
+  passwordGenerator(elements['numberOfPasswords'])
+  elements['passwordContainer'].appendChild(listElement)
 }
 
 function pwdLength() {
   generatedLength = ''
-  if (randomLength.checked) {
-    const min = parseInt(lengthRange.getElementsByTagName('input')[1].value)
-    const max = parseInt(lengthRange.getElementsByTagName('input')[2].value)
+  if (elements['randomLength'].checked) {
+    const min = parseInt(elements['lengthRange'].getElementsByTagName('input')[1].value)
+    const max = parseInt(elements['lengthRange'].getElementsByTagName('input')[2].value)
     generatedLength = Math.floor(Math.random() * (max - min) + min)
-  } else if (length.value) {
-    generatedLength = parseInt(length.value)
+  } else if (elements['length'].value) {
+    generatedLength = parseInt(elements['length'].value)
   }
   return generatedLength
 }
 
 function passwordGenerator(pwdNum) {
-  const requiredSymbolsArray = requiredSymbols.value ? requiredSymbols.value.split('') : []
+  const requiredSymbolsArray = elements['requiredSymbols'].value ? elements['requiredSymbols'].value.split('') : []
 
   for (let x = 0; x < pwdNum.value; x++) {
     let generatedPassword
     let myLength = pwdLength()
     let xz = ''
-    if (requiredWord.value) {
-      myLength -= parseInt(requiredWord.value.length)
+    if (elements['requiredWord'].value) {
+      myLength -= parseInt(elements['requiredWord'].value.length)
     }
     do {
       generatedPassword = ''
@@ -231,9 +287,9 @@ function passwordGenerator(pwdNum) {
         const randomIndex = Math.floor(Math.random() * passwordSymbols.length)
         generatedPassword += passwordSymbols[randomIndex];
       }
-      if (requiredWord.value) {
+      if (elements['requiredWord'].value) {
         xz = Math.floor(Math.random() * generatedPassword.length)
-        generatedPassword = generatedPassword.slice(0, xz) + requiredWord.value + generatedPassword.slice(xz)
+        generatedPassword = generatedPassword.slice(0, xz) + elements['requiredWord'].value + generatedPassword.slice(xz)
       }
 
     } while (!requiredSymbolsArray.every(char => generatedPassword.includes(char)))
@@ -245,10 +301,10 @@ function passwordGenerator(pwdNum) {
     const paragraph = document.createElement('p')
     const toggleCheckbox = document.createElement('input')
     toggleCheckbox.type = 'checkbox'
-    toggleCheckbox.checked = hidePasswords.checked
+    toggleCheckbox.checked = elements['hidePasswords'].checked
 
     const passwordText = document.createElement('span')
-    passwordText.textContent = hidePasswords.checked ? '******' : generatedPassword
+    passwordText.textContent = elements['hidePasswords'].checked ? '******' : generatedPassword
 
     // Обработчик для чекбокса
     toggleCheckbox.addEventListener('change', function () {
@@ -264,7 +320,7 @@ function passwordGenerator(pwdNum) {
 }
 
 function togglePasswordsVisibility() {
-  const listItems = passwordContainer.getElementsByTagName('li');
+  const listItems = elements['passwordContainer'].getElementsByTagName('li');
   passwordsHidden = !passwordsHidden;
 
   for (let i = 0; i < listItems.length; i++) {
@@ -276,29 +332,3 @@ function togglePasswordsVisibility() {
     passwordText.textContent = passwordsHidden ? '******' : generatedPasswords[i];
   }
 }
-
-function checkFormValidity() {
-  const isValid =
-  upperCase.checked ||
-  lowerCase.checked ||
-  digits.checked ||
-  symbols.checked ||
-  space.checked ||
-  addSymbols.value ||
-  overriddenSymbols.value
-  
-  generatorBtn.disabled = !isValid
-
-  let existingMessage = myBtn.querySelector('span')
-  if (!isValid) {
-    if (!existingMessage) {
-      const myEl = document.createElement('span')
-      myEl.textContent = "*Add something to your future password or override your own symbols"
-      myBtn.append(myEl)
-    }
-  } else {
-    if (existingMessage) {
-      existingMessage.remove()
-    }
-  }
-} 
